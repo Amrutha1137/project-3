@@ -1,0 +1,72 @@
+#include <iostream>
+#include <queue>
+#include <stack>
+#include <string>
+#include <ctime>
+using namespace std;
+
+struct Message {
+    string text;
+    string timestamp;
+};
+
+string getTimestamp() {
+    time_t now = time(0);
+    char* dt = ctime(&now);
+    string s(dt);
+    s.pop_back();
+    return s;
+}
+
+int main() {
+    queue<Message> inbox;
+    stack<Message> undoStack, redoStack;
+    int choice;
+    do {
+        cout << "\n1. Send Message\n2. View Inbox\n3. Undo Last Message\n4. Redo Message\n5. Exit\nEnter choice: ";
+        cin >> choice;
+        cin.ignore();
+        if (choice == 1) {
+            Message msg;
+            cout << "Enter message: ";
+            getline(cin, msg.text);
+            msg.timestamp = getTimestamp();
+            inbox.push(msg);
+            undoStack.push(msg);
+            while (!redoStack.empty()) redoStack.pop();
+        } 
+        else if (choice == 2) {
+            queue<Message> temp = inbox;
+            cout << "\n--- Inbox ---\n";
+            while (!temp.empty()) {
+                cout << "[" << temp.front().timestamp << "] " << temp.front().text << endl;
+                temp.pop();
+            }
+        } 
+        else if (choice == 3) {
+            if (!undoStack.empty()) {
+                Message last = undoStack.top();
+                undoStack.pop();
+                redoStack.push(last);
+                queue<Message> temp;
+                while (!inbox.empty()) {
+                    if (inbox.front().text != last.text || inbox.front().timestamp != last.timestamp)
+                        temp.push(inbox.front());
+                    inbox.pop();
+                }
+                inbox = temp;
+                cout << "Message undone.\n";
+            } else cout << "Nothing to undo.\n";
+        } 
+        else if (choice == 4) {
+            if (!redoStack.empty()) {
+                Message msg = redoStack.top();
+                redoStack.pop();
+                inbox.push(msg);
+                undoStack.push(msg);
+                cout << "Message redone.\n";
+            } else cout << "Nothing to redo.\n";
+        }
+    } while (choice != 5);
+    return 0;
+}
